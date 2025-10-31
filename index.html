@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>答题设置</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>自定义答题</h1>
+<label>选择题库（多选）:</label><br>
+<select id="banks" multiple></select><br>
+<label>选取题目数:</label> <input type="number" id="numQuestions" value="5"><br>
+<label>时限（分钟）:</label> <input type="number" id="timeMin" value="0">
+<label>秒:</label> <input type="number" id="timeSec" value="0"> （0为不限时）<br>
+<button onclick="startQuiz()">开始答题</button>
+
+<h2>上传新题库CSV</h2>
+<input type="file" id="uploadFile">
+<button onclick="uploadBank()">上传</button>
+
+<a href="stats.html">查看统计</a>
+
+<script src="script.js"></script>
+<script>
+    fetch('/api/question-banks').then(res => res.json()).then(banks => {
+        const select = document.getElementById('banks');
+        banks.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b; opt.text = b; select.appendChild(opt);
+        });
+    });
+
+    function startQuiz() {
+        const selectedBanks = Array.from(document.getElementById('banks').selectedOptions).map(o => o.value);
+        const num = document.getElementById('numQuestions').value;
+        const min = document.getElementById('timeMin').value;
+        const sec = document.getElementById('timeSec').value;
+        const timeLimit = (min * 60 + parseInt(sec)) * 1000; // ms
+        localStorage.setItem('quizConfig', JSON.stringify({banks: selectedBanks, num, timeLimit}));
+        window.location.href = 'quiz.html';
+    }
+
+    function uploadBank() {
+        const file = document.getElementById('uploadFile').files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+        fetch('/api/upload-bank', {method: 'POST', body: formData}).then(() => alert('上传成功'));
+    }
+</script>
+</body>
+</html>
